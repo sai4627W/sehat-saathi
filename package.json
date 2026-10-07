@@ -1,0 +1,12 @@
+{
+  "name": "sehat-saathi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Voice bridge for rural doctor-patient consultations: patient speaks their language, doctor reads English, prescription comes back in the patient's language.",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js"
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}

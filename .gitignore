@@ -1,0 +1,6 @@
+.env
+node_modules/
+.DS_Store
+
+# Never commit a real key
+config.local.js

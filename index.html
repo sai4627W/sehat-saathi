@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d9488">
+<title>Sehat Saathi — Rural Doctor Translator</title>
+<meta name="description" content="The patient speaks in their own language. The doctor reads and replies in English. The prescription comes back in the patient's language.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d9488'/%3E%3Cpath d='M16 8v16M8 16h16' stroke='white' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  /* Set the theme before first paint so there is no flash of the wrong colours. */
+  (function () {
+    var t = 'light';
+    try {
+      t = localStorage.getItem('ss-theme') ||
+           (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    } catch (e) { /* private mode */ }
+    if (t !== 'light' && t !== 'dark') t = 'light';
+    document.documentElement.dataset.theme = t;
+  })();
+</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══════════════════════════ icon sprite ══════════════════════════ -->
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.5-7 4 14 2.5-7h5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-mic-wave" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M19 9.2a4.4 4.4 0 0 1 0 5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".6"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12h13m0 0-5-5m5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 4v16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".35"/></symbol>
+  <symbol id="i-speak" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-stetho" viewBox="0 0 24 24"><path d="M6 3v5a4.5 4.5 0 0 0 9 0V3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M4 3h4M11 3h4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M10.5 16.5v1.7a3.8 3.8 0 0 0 7.6 0v-1.4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><circle cx="18.6" cy="13.4" r="2.4" fill="currentColor"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0z" fill="currentColor"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.2 9.8h17.6M3.2 14.2h17.6M12 3a15 15 0 0 1 0 18A15 15 0 0 1 12 3z" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.4" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.8v2.4M12 19.8v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M1.8 12h2.4M19.8 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></g></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.4 8.4 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.6 4.6 4.6L19 6.8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.6 21.2 20H2.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9.6v4.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.8" r="1.25" fill="currentColor"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.6h10V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="3" y="9" width="18" height="7.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="7" y="14" width="10" height="6.4" rx="1.4" fill="currentColor"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8.6" y="2.6" width="6.8" height="4.4" rx="1.6" fill="currentColor"/><path d="M8.4 12.4h7.2M8.4 16h4.6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 5 7.5 12l7 7" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M7.5 14h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M4 12h15m0 0-5.5-5.5M19 12l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-arrow-l" viewBox="0 0 24 24"><path d="M20 12H5m0 0 5.5-5.5M5 12l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h2.5l2-5 3 12 3-9 2 4H21" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.8 20 6v6c0 4.6-3.2 7.9-8 9.2-4.8-1.3-8-4.6-8-9.2V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m8.6 12 2.4 2.4 4.4-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 5.5v-.8a1.7 1.7 0 0 0-1.7-1.7H4.7A1.7 1.7 0 0 0 3 4.7v9.1a1.7 1.7 0 0 0 1.7 1.7h.8" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3.4 10.4 12 3.6l8.6 6.8v8.2a2 2 0 0 1-2 2h-4.2v-6h-4.8v6H5.4a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="8.6" cy="8" r="3.6" fill="currentColor"/><path d="M1.8 20a6.8 6.8 0 0 1 13.6 0z" fill="currentColor"/><path d="M16.4 5.2a3.6 3.6 0 0 1 0 6.9M18 13.6a6.8 6.8 0 0 1 4.2 6.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h10" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15.5V3.8m0 0L8.2 7.6M12 3.8l3.8 3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 12.6v6.1a1.6 1.6 0 0 0 1.6 1.6h10.8a1.6 1.6 0 0 0 1.6-1.6v-6.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 6.5V5h14v1.5M12 5v14M9 19h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5.8h16v10.4h-8.2L7 19.6v-3.4H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 10.4h8M8 13h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".65"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M11 2.6 13 8.9l6.3 2-6.3 2L11 19.4 9 13.1l-6.3-2 6.3-2z" fill="currentColor"/><path d="M18.4 3.2l.8 2.4 2.4.8-2.4.8-.8 2.4-.8-2.4-2.4-.8 2.4-.8z" fill="currentColor" opacity=".65"/></symbol>
+  <symbol id="i-siren" viewBox="0 0 24 24"><path d="M6.5 16.8v-4a5.5 5.5 0 0 1 11 0v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="16.6" width="16" height="4.4" rx="1.8" fill="currentColor"/><path d="M12 2.4v2.6M4.6 5.6l1.8 1.8M19.4 5.6l-1.8 1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.4 3.6h3.1l1.4 4-2 1.5a11.2 11.2 0 0 0 5.4 5.4l1.5-2 4 1.4v3.1a2.5 2.5 0 0 1-2.7 2.5A14.7 14.7 0 0 1 3.9 6.3a2.5 2.5 0 0 1 2.5-2.7z" fill="currentColor"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.8 12a7.8 7.8 0 1 1-2.4-5.6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/><path d="M19.8 3.6V8h-4.4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><rect x="4.5" y="3" width="15" height="18" rx="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.4 8.4h7.2M8.4 12h7.2M8.4 15.6h4.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m17 8.5 3.5 3.5L17 15.5M20.5 12h-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- ══════════════════════════ ambience ══════════════════════════
+     A calm aurora wash rather than a pointer-driven depth stack. The
+     gradients are already soft, so nothing here needs a blur pass, and the
+     washes drift with transform/opacity only — the compositor does the work
+     and the main thread stays free. Nothing here takes pointer events. -->
+<div class="aurora" aria-hidden="true">
+  <span class="orb orb-a"></span>
+  <span class="orb orb-b"></span>
+  <span class="orb orb-c"></span>
+  <span class="orb orb-d"></span>
+  <span class="beam beam-a"></span>
+  <span class="beam beam-b"></span>
+  <span class="mesh"></span>
+</div>
+
+<!-- ══════════════════════════ top bar ══════════════════════════ -->
+<header class="topbar">
+  <div class="brand">
+    <span class="avatar-ring" aria-hidden="true">
+      <span class="logo">
+        <svg viewBox="0 0 24 24"><use href="#i-pulse"/></svg>
+        <span class="logo-halo"></span>
+      </span>
+      <span class="ring"></span>
+    </span>
+    <span class="brand-text">
+      <strong>Sehat Saathi</strong>
+      <small>health companion</small>
+    </span>
+  </div>
+
+  <div class="topbar-right">
+    <span id="roleChip" class="role-chip" hidden>
+      <i class="role-chip-dot" aria-hidden="true"></i>
+      <span id="roleChipText">Doctor</span>
+    </span>
+    <span id="netBadge" class="badge" title="Network status">
+      <i class="badge-dot"></i><span>online</span>
+    </span>
+    <button id="langBtn" class="icon-btn" type="button" title="Change language" aria-label="Change the patient's language">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-globe"/></svg>
+      <span class="icon-btn-label" id="langBtnLabel">Language</span>
+    </button>
+    <button id="themeBtn" class="icon-btn icon-btn-sq" type="button" aria-label="Switch theme">
+      <svg class="ico ico-sun" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sun"/></svg>
+      <svg class="ico ico-moon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-moon"/></svg>
+    </button>
+    <button id="logoutBtn" class="icon-btn icon-btn-sq" type="button" title="Leave this room" aria-label="Leave this room" hidden>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-exit"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden role="status" aria-live="polite"></div>
+
+<!-- ══════════════════════════ bottom tab bar ══════════════════════════ -->
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <div class="tabbar-inner">
+    <button class="tab is-on" type="button" id="roleTab" data-screen="login" aria-current="page">
+      <span class="tab-ico">
+        <svg class="ico ico-for-doctor" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-stetho"/></svg>
+        <svg class="ico ico-for-patient" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg>
+      </span>
+      <span class="tab-label" id="roleTabLabel">Start</span>
+    </button>
+    <button class="tab" type="button" id="consultTab" data-screen="consult">
+      <span class="tab-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-users"/></svg></span>
+      <span class="tab-label">Consult</span>
+      <span class="tab-dot" aria-hidden="true"></span>
+    </button>
+    <button class="tab" type="button" data-screen="rx">
+      <span class="tab-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clipboard"/></svg></span>
+      <span class="tab-label">Rx</span>
+    </button>
+    <button class="tab" type="button" data-action="transcript">
+      <span class="tab-ico"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-list"/></svg></span>
+      <span class="tab-label">Log</span>
+      <span class="tab-badge" id="tabTurns" hidden>0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════ action sheet ══════════════════════════ -->
+<div class="sheet-scrim" id="sheetScrim" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <span class="sheet-grab" aria-hidden="true"></span>
+  <h2 class="sheet-title" id="sheetTitle">Prescription</h2>
+  <div class="sheet-actions">
+    <button class="sheet-btn" id="sheetPrint" type="button">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-print"/></svg>
+      <span><b>Print or save as PDF</b><small>Opens the system print dialog</small></span>
+    </button>
+    <button class="sheet-btn" id="sheetCopy" type="button">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-text"/></svg>
+      <span><b>Copy as plain text</b><small>For WhatsApp or a paper note</small></span>
+    </button>
+  </div>
+  <button class="sheet-cancel" id="sheetClose" type="button">Cancel</button>
+</div>
+
+<!-- ══════════════════════════ urgent session sheet ══════════════════════════
+     The patient-side "something is wrong right now" room. It sits on top of
+     whatever screen is showing because it is meant to be reachable from the
+     chat in one tap. -->
+<div class="sheet-scrim" id="urgScrim" hidden></div>
+<section class="sheet sheet-tall" id="urgentSheet" role="dialog" aria-modal="true" aria-labelledby="urgTitle" hidden>
+  <span class="sheet-grab" aria-hidden="true"></span>
+
+  <header class="urg-head">
+    <span class="urg-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-siren"/></svg></span>
+    <span class="urg-title">
+      <h2 id="urgTitle">Urgent help</h2>
+      <small id="urgSub">Answers in Hindi · not a diagnosis</small>
+    </span>
+    <button class="icon-btn icon-btn-sq" id="urgClose" type="button" aria-label="Close urgent help">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg>
+    </button>
+  </header>
+
+  <div class="urg-sos">
+    <a class="sos-call" href="tel:108"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-phone"/></svg><b>Call 108</b><small>ambulance</small></a>
+    <a class="sos-call sos-alt" href="tel:112"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-phone"/></svg><b>112</b><small>emergency</small></a>
+    <p class="hint">Unconscious, not breathing, chest pain, fits, heavy bleeding or very dehydrated — call first, do not wait for a reply.</p>
+  </div>
+
+  <div class="thread urg-thread" id="urgThread">
+    <div class="thread-empty"><p>Tell me what is happening. You can speak in your own language.</p></div>
+  </div>
+
+  <div class="typing" id="urgTyping" hidden aria-hidden="true"><span></span><span></span><span></span><em>checking…</em></div>
+
+  <button class="btn-secondary btn-escalate" id="urgEscalate" type="button" hidden>
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg> Send this to my doctor
+  </button>
+
+  <div class="composer urg-composer">
+    <label class="io-label" for="urgInput">What is happening?</label>
+    <textarea id="urgInput" rows="2" placeholder="Fever since morning, vomiting twice…"></textarea>
+    <span id="urgInterim" class="interim" aria-live="polite"></span>
+    <div class="composer-row">
+      <button class="mic mic-urgent" id="urgMic" type="button" aria-label="Speak your symptoms">
+        <span class="mic-ring" aria-hidden="true"></span>
+        <span class="mic-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic"/></svg></span>
+        <span class="mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+        <span class="mic-label">Speak</span>
+      </button>
+      <button class="btn-primary btn-urgent-go" id="urgSend" type="button" disabled>
+        Ask now <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<main>
+
+<!-- ══════════════════════════ LOGIN ══════════════════════════
+     Two doors into the same room. The patient joins with a code the doctor
+     is already holding; the doctor makes the code. Whichever side you pick is
+     remembered for this tab only (sessionStorage), so the same browser can be
+     a doctor in one tab and a patient in the next. -->
+<section id="screen-login" class="screen screen-narrow">
+
+  <div class="hero">
+    <span class="hero-badge"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shield"/></svg> No signup · nothing kept after the visit</span>
+    <h1>One room.<br><em>Two seats.</em></h1>
+    <p class="lede">
+      The doctor opens a room from the clinic, the patient joins from home with a
+      four-word code. Whatever you say arrives on the other phone — in the right language.
+    </p>
+  </div>
+
+  <div class="role-grid" role="tablist" aria-label="Choose your side">
+    <button class="role-card role-doctor" type="button" role="tab" data-role="doctor" aria-selected="false">
+      <span class="role-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-stetho"/></svg></span>
+      <b>Doctor</b>
+      <small>Desk, case form &amp; AI copilot</small>
+      <span class="role-points">
+        <span>Share a room code</span>
+        <span>Read the case in English</span>
+        <span>Dictate or type the reply</span>
+      </span>
+      <span class="role-go" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-arrow-r"/></svg></span>
+    </button>
+    <button class="role-card role-patient" type="button" role="tab" data-role="patient" aria-selected="false">
+      <span class="role-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-chat"/></svg></span>
+      <b>Patient</b>
+      <small>Chat, voice &amp; urgent help</small>
+      <span class="role-points">
+        <span>Type the room code</span>
+        <span>Talk in your own language</span>
+        <span>AI help, day or night</span>
+      </span>
+      <span class="role-go" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-arrow-r"/></svg></span>
+    </button>
+  </div>
+
+  <form class="card login-card" id="loginForm" autocomplete="on" novalidate hidden>
+    <div class="card-head">
+      <h2 id="loginTitle"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-user"/></svg> <span id="loginTitleText">Join the room</span></h2>
+      <span class="tag tag-doctor" id="loginTag" hidden>Doctor</span>
+    </div>
+
+    <div class="field-grid" data-when="patient">
+      <label class="field"><span>Your name</span>
+        <input id="patName" name="name" type="text" placeholder="Sunita Devi" autocomplete="name"></label>
+      <label class="field"><span>Age <em>optional</em></span>
+        <input id="patAge" name="age" type="text" inputmode="numeric" placeholder="34" autocomplete="off"></label>
+    </div>
+
+    <div class="field-grid" data-when="doctor">
+      <label class="field"><span>Full name</span>
+        <input id="docName" name="name" type="text" placeholder="Dr. Anil Kumar" autocomplete="name"></label>
+      <label class="field"><span>Registration no. <em>optional</em></span>
+        <input id="docReg" name="reg" type="text" placeholder="RMP/2019/4482" autocomplete="off"></label>
+    </div>
+
+    <div class="room-block" data-when="doctor">
+      <span class="io-label">Your room code</span>
+      <div class="room-code" id="docRoom" aria-live="polite">—</div>
+      <div class="room-actions">
+        <button class="chip-btn" type="button" id="newRoomBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-refresh"/></svg> New code</button>
+        <button class="chip-btn" type="button" id="copyRoomBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-copy"/></svg> Copy</button>
+      </div>
+      <p class="hint">Read this code to the patient, or send it on WhatsApp.</p>
+    </div>
+
+    <div class="room-block" data-when="patient">
+      <label class="field"><span>Room code</span>
+        <input id="patRoom" name="room" type="text" inputmode="latin" autocapitalize="characters"
+               spellcheck="false" placeholder="K7X-4Q2" maxlength="7"></label>
+      <p class="hint">Four to twelve characters, straight from the doctor.</p>
+    </div>
+
+    <div class="login-lang" data-when="patient">
+      <span class="io-label">I speak</span>
+      <div id="loginLang" class="lang-grid" role="radiogroup" aria-label="Your language"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary btn-big btn-shine" type="submit">
+        <span class="btn-label" id="loginGoLabel">Enter the room</span>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-r"/></svg>
+      </button>
+    </div>
+    <p class="hint center">Demo: open this page in a second tab, pick the other side, and use the same code.</p>
+    <button class="btn-link" type="button" id="roleBack">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-l"/></svg>
+      Choose the other side
+    </button>
+  </form>
+</section>
+
+<!-- ══════════════════════════ SETUP ══════════════════════════ -->
+<section id="screen-setup" class="screen screen-narrow">
+
+  <div class="hero">
+    <span class="hero-badge"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-shield"/></svg> Works offline for typing</span>
+    <h1>Speak your language.<br><em>Be understood.</em></h1>
+    <p class="lede">
+      The patient talks in their own language. The doctor reads and replies in English.
+      Nothing gets lost in between.
+    </p>
+  </div>
+
+  <!-- how it works -->
+  <ol class="flow" aria-label="How it works">
+    <li class="flow-step flow-patient">
+      <span class="flow-ico"><svg class="ico" viewBox="0 0 24 24"><use href="#i-user"/></svg></span>
+      <span class="flow-body"><b>Patient speaks</b><small id="flowLang">in Hindi</small></span>
+    </li>
+    <li class="flow-link" aria-hidden="true"><span></span><svg class="ico" viewBox="0 0 24 24"><use href="#i-arrow-r"/></svg></li>
+    <li class="flow-step flow-doctor">
+      <span class="flow-ico"><svg class="ico" viewBox="0 0 24 24"><use href="#i-stetho"/></svg></span>
+      <span class="flow-body"><b>Doctor reads English</b><small>and replies</small></span>
+    </li>
+    <li class="flow-link" aria-hidden="true"><span></span><svg class="ico" viewBox="0 0 24 24"><use href="#i-arrow-l"/></svg></li>
+    <li class="flow-step flow-patient">
+      <span class="flow-ico"><svg class="ico" viewBox="0 0 24 24"><use href="#i-clipboard"/></svg></span>
+      <span class="flow-body"><b>Prescription back</b><small id="flowLang2">in Hindi</small></span>
+    </li>
+  </ol>
+
+  <!-- language picker -->
+  <div class="picker card">
+    <div class="card-head">
+      <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-globe"/></svg> Patient speaks</h2>
+      <span class="tag tag-patient" id="langTagTop">Hindi</span>
+    </div>
+    <div id="langSelect" class="lang-grid" role="radiogroup" aria-label="Patient language"></div>
+    <p class="hint" id="langHint"></p>
+  </div>
+
+  <!-- capability report -->
+  <div id="capList" class="cap-list"></div>
+
+  <button id="startBtn" class="btn-primary btn-big btn-shine" type="button">
+    <span class="btn-label">Start consultation</span>
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-r"/></svg>
+  </button>
+  <button id="demoBtn" class="btn-link" type="button">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-keyboard"/></svg>
+    No microphone? Use text instead
+  </button>
+</section>
+
+<!-- ══════════════════════════ DOCTOR DESK ══════════════════════════
+     One screen, two columns: the live channel with the patient on the left,
+     the case form and the copilot on the right. On a narrow screen the form
+     stacks under the channel so the conversation stays reachable. -->
+<section id="screen-doctor" class="screen screen-wide" hidden>
+
+  <div class="desk-head card">
+    <div class="desk-id">
+      <span class="avatar avatar-doctor" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-stetho"/></svg></span>
+      <div class="pod-id">
+        <h2 id="deskTitle">Consultation desk</h2>
+        <p class="pod-sub">Room <span class="tag tag-room" id="deskRoom">—</span> · <span id="deskPeer">patient not joined yet</span></p>
+      </div>
+    </div>
+    <div class="desk-head-right">
+      <button class="chip-btn" type="button" id="deskCopy"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-copy"/></svg> Copy code</button>
+      <button class="chip-btn" type="button" id="deskLeave"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-exit"/></svg> Leave</button>
+      <span class="pill" id="deskPeerState"><i></i><span>waiting</span></span>
+    </div>
+  </div>
+
+  <div class="desk">
+    <div class="desk-main">
+
+      <!-- live channel -->
+      <div class="card chan-card">
+        <div class="card-head">
+          <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg> Live with the patient</h2>
+          <span class="tag tag-patient" id="docPeerLang" hidden>Hindi</span>
+        </div>
+
+        <div class="thread" id="docThread">
+          <div class="thread-empty">
+            <p>The patient's messages arrive here, already in English. Reply below — it goes back in their language.</p>
+          </div>
+        </div>
+        <div class="typing" id="docTyping" hidden aria-hidden="true"><span></span><span></span><span></span><em>patient is typing</em></div>
+
+        <div class="composer">
+          <label class="io-label" for="docMsg">Your reply</label>
+          <textarea id="docMsg" rows="2" placeholder="Type in English, or dictate with the mic"></textarea>
+          <span id="docMsgInterim" class="interim" aria-live="polite"></span>
+          <div class="composer-row composer-row-desk">
+            <button class="mic mic-doctor mic-compact" id="docMic" type="button" aria-label="Dictate reply">
+              <span class="mic-ring" aria-hidden="true"></span>
+              <span class="mic-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic"/></svg></span>
+              <span class="mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="mic-label">Dictate</span>
+            </button>
+            <button class="mic-alt mic-alt-doctor" id="docTranscribe" type="button" hidden
+                    aria-label="Record a clip and transcribe it">
+              <span class="mic-alt-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic-wave"/></svg></span>
+              <span class="mic-alt-label">Transcribe</span>
+            </button>
+            <button class="btn-primary btn-doctor" id="docSend" type="button" disabled>
+              Send to patient <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- copilot -->
+      <div class="card ai-card" id="copilotCard">
+        <div class="card-head">
+          <h2><svg class="ico ai-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spark"/></svg> AI copilot</h2>
+          <span class="tag tag-doctor">second opinion</span>
+        </div>
+        <div class="ai-thread" id="aiThread">
+          <div class="ai-msg ai-them">
+            <p>Fill the case and ask me anything — differentials, danger signs, a summary for handover, or a prescription draft to edit.</p>
+          </div>
+        </div>
+        <div class="ai-chips" id="aiChips" role="group" aria-label="Quick questions">
+          <button type="button" data-q="Give me the top 3 differential diagnoses: what fits each one, and what would rule it out.">Differentials</button>
+          <button type="button" data-q="Summarise this case in 4 lines for handover.">Summarise</button>
+          <button type="button" data-q="Which danger signs should I check for this presentation?">Danger signs</button>
+          <button type="button" data-q="Draft a prescription note for this assessment that I can edit.">Draft Rx</button>
+        </div>
+        <div class="composer ai-composer">
+          <label class="sr-only" for="aiInput">Ask the copilot</label>
+          <textarea id="aiInput" rows="2" placeholder="Ask about this case…"></textarea>
+          <div class="composer-row">
+            <button class="btn-primary btn-doctor btn-sm" id="aiSend" type="button" disabled>Ask</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="desk-side">
+
+      <!-- case form -->
+      <form class="card case-card" id="caseForm" novalidate>
+        <div class="card-head">
+          <h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-form"/></svg> Consultation note</h2>
+          <button class="chip-btn" type="button" id="toRxFromForm"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clipboard"/></svg> Rx</button>
+        </div>
+
+        <div class="field-block">
+          <label class="io-label" for="fComplaint">Chief complaint</label>
+          <textarea id="fComplaint" rows="2" placeholder="Fever for 3 days, body ache…"></textarea>
+          <p class="hint tiny" id="complaintAuto" hidden></p>
+        </div>
+
+        <div class="field-grid">
+          <div class="field-block">
+            <label class="io-label" for="fHistory">History</label>
+            <textarea id="fHistory" rows="3" placeholder="Onset, duration, past illness…"></textarea>
+          </div>
+          <div class="field-block">
+            <label class="io-label" for="fExam">Examination</label>
+            <textarea id="fExam" rows="3" placeholder="General condition, throat, chest…"></textarea>
+          </div>
+        </div>
+
+        <fieldset class="vitals">
+          <legend>Vitals</legend>
+          <div class="vitals-grid">
+            <label class="vital"><span>BP</span><input id="vBp" type="text" inputmode="numeric" placeholder="120/80"></label>
+            <label class="vital"><span>Pulse</span><input id="vPulse" type="text" inputmode="numeric" placeholder="88 rpm"></label>
+            <label class="vital"><span>Temp</span><input id="vTemp" type="text" inputmode="decimal" placeholder="99.4 °F"></label>
+            <label class="vital"><span>SpO₂</span><input id="vSpo2" type="text" inputmode="numeric" placeholder="97 %"></label>
+            <label class="vital"><span>Resp</span><input id="vResp" type="text" inputmode="numeric" placeholder="20 /min"></label>
+            <label class="vital"><span>Weight</span><input id="vWeight" type="text" inputmode="decimal" placeholder="58 kg"></label>
+          </div>
+          <div class="vital-actions">
+            <button class="chip-btn" type="button" id="flagsBtn">
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spark"/></svg> Check danger signs
+            </button>
+          </div>
+          <div class="flags" id="flagsOut" hidden></div>
+        </fieldset>
+
+        <div class="field-grid">
+          <div class="field-block">
+            <label class="io-label" for="fDx">Assessment / diagnosis</label>
+            <input id="fDx" type="text" class="input" placeholder="Acute pharyngitis">
+          </div>
+          <div class="field-block">
+            <label class="io-label" for="fAllergy">Allergies / ongoing meds</label>
+            <input id="fAllergy" type="text" class="input" placeholder="None known">
+          </div>
+        </div>
+
+        <div class="field-block">
+          <label class="io-label" for="fPlan">Plan &amp; advice for the patient</label>
+          <textarea id="fPlan" rows="3" placeholder="Rest, fluids, review in 3 days…"></textarea>
+        </div>
+
+        <div class="actions actions-row">
+          <button class="btn-secondary" type="button" id="saveNoteBtn">Save note</button>
+          <button class="btn-secondary" type="button" id="sendAdviceBtn">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg> Send advice
+          </button>
+        </div>
+        <div class="actions actions-row">
+          <button class="btn-secondary" type="button" id="draftRxBtn">Draft prescription</button>
+          <button class="btn-secondary" type="button" id="liveConsultBtn">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-users"/></svg> Live consult
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ PATIENT CHAT ══════════════════════════ -->
+<section id="screen-patient" class="screen screen-narrow" hidden>
+
+  <div class="card session session-patient">
+    <span class="avatar avatar-patient" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-stetho"/></svg></span>
+    <div class="pod-id">
+      <h2 id="patPeerName">My doctor</h2>
+      <p class="pod-sub">Room <span class="tag tag-room" id="patRoomTag">—</span> · <span class="tag tag-patient" id="patLangTag">Hindi</span></p>
+    </div>
+    <div class="session-side">
+      <span class="pill" id="patPeerState"><i></i><span>waiting</span></span>
+      <button class="icon-btn icon-btn-sq" id="patSpeakToggle" type="button" aria-pressed="true"
+              title="Read the doctor's replies aloud" aria-label="Read the doctor's replies aloud">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-speak"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="card chat-card">
+    <div class="thread" id="patThread">
+      <div class="thread-empty">
+        <p>Say what is happening in your own language. The doctor will read it in English and reply.</p>
+      </div>
+    </div>
+    <div class="typing" id="patTyping" hidden aria-hidden="true"><span></span><span></span><span></span><em>doctor is typing</em></div>
+
+    <div class="composer">
+      <label class="io-label" for="patMsg">Write a message</label>
+      <textarea id="patMsg" rows="2" placeholder="Or tap the mic and speak…"></textarea>
+      <span id="patMsgInterim" class="interim" aria-live="polite"></span>
+      <div class="composer-row composer-row-desk">
+        <button class="mic-alt" id="patTranscribe" type="button" hidden aria-label="Record a clip and transcribe it">
+          <span class="mic-alt-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic-wave"/></svg></span>
+          <span class="mic-alt-label">Transcribe</span>
+        </button>
+        <button class="btn-primary" id="patSend" type="button" disabled>
+          Send <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="speak-row">
+    <button class="mic" id="patMic" type="button" aria-label="Tap to speak">
+      <span class="mic-ring" aria-hidden="true"></span>
+      <span class="mic-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic"/></svg></span>
+      <span class="mic-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="mic-label">Tap to speak</span>
+    </button>
+    <button class="btn-urgent" id="urgentBtn" type="button">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-siren"/></svg>
+      <span><b>Urgent help</b><small>AI answers now</small></span>
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════════════ CONSULT ══════════════════════════ -->
+<section id="screen-consult" class="screen screen-wide" hidden>
+
+  <div class="stepbar">
+    <button class="btn-ghost" id="backToSetup" type="button">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-back"/></svg> Language
+    </button>
+    <span id="stepLabel" class="step-label">Step 1 of 3 · Patient speaks</span>
+    <div class="rail" role="presentation"><span class="rail-fill" id="railFill"></span></div>
+  </div>
+
+  <!-- ════ SECTION SWITCHER (narrow screens only) ════ -->
+  <div class="segbar" id="segbar" role="tablist" aria-label="Choose which section to show">
+    <span class="seg-thumb" aria-hidden="true"></span>
+    <button class="seg is-on" type="button" role="tab" data-view="both" aria-selected="true">Both</button>
+    <button class="seg" type="button" role="tab" data-view="patient" aria-selected="false">Patient</button>
+    <button class="seg" type="button" role="tab" data-view="doctor" aria-selected="false">Doctor</button>
+  </div>
+
+  <!-- ════ THE TWO SECTIONS ════ -->
+  <div class="stage">
+
+    <!-- ───────── PATIENT ───────── -->
+    <article class="pod pod-patient is-active" id="patientCard">
+      <div class="pod-sheen" aria-hidden="true"></div>
+
+      <header class="pod-head">
+        <span class="avatar avatar-patient"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-user"/></svg></span>
+        <div class="pod-id">
+          <h2>Patient</h2>
+          <p class="pod-sub">Speaks <span class="tag tag-patient" id="patientLangTag">Hindi</span></p>
+        </div>
+        <span class="pill" id="patientState"><i></i><span>Ready</span></span>
+      </header>
+
+      <!-- what the patient said / is saying -->
+      <div class="io-block">
+        <label class="io-label" for="patientInput">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>
+          Patient's words
+        </label>
+        <textarea id="patientInput" class="say" rows="3"
+          placeholder="Describe the problem in their own words"></textarea>
+        <span id="interim" class="interim" aria-live="polite"></span>
+        <div class="skeleton" aria-hidden="true"><span></span><span></span></div>
+      </div>
+
+      <div class="mic-row">
+        <button id="patientMic" class="mic" type="button" aria-label="Tap to speak">
+          <span class="mic-ring" aria-hidden="true"></span>
+          <span class="mic-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic"/></svg></span>
+          <span class="mic-bars" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="mic-label">Tap to speak</span>
+        </button>
+        <button id="patientTranscribe" class="mic-alt" type="button" hidden
+          title="Record, then send to the server for the words"
+          aria-label="Record audio and send it for transcription instead of live speech">
+          <span class="mic-alt-ico" aria-hidden="true">
+            <svg class="ico" viewBox="0 0 24 24"><use href="#i-mic-wave"/></svg>
+          </span>
+          <span class="mic-alt-label">Transcribe</span>
+        </button>
+        <p class="mic-hint">Hold nothing — just tap, talk, and tap again.</p>
+      </div>
+
+      <!-- doctor's reply, in the patient's language -->
+      <div class="io-block">
+        <span class="io-label">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-speak"/></svg>
+          What the doctor said
+        </span>
+        <div id="patientReply" class="bubble bubble-patient" lang="hi" data-empty="Nothing said yet">
+          <span class="empty">The doctor's reply will appear here, in the patient's language.</span>
+        </div>
+        <div class="skeleton" aria-hidden="true"><span></span><span></span></div>
+      </div>
+
+      <div class="actions actions-row">
+        <button id="toDoctorBtn" class="btn-primary" type="button">
+          <span class="btn-label">Give to doctor</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-r"/></svg>
+        </button>
+        <button id="replayBtn" class="btn-secondary btn-sq" type="button" disabled
+          title="Check what I heard" aria-label="Check what I heard">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-speak"/></svg>
+        </button>
+      </div>
+    </article>
+
+    <!-- ───────── THE BRIDGE ───────── -->
+    <div class="bridge" aria-hidden="true">
+      <div class="bridge-line"></div>
+      <div class="bridge-node">
+        <span class="bridge-glyph"><svg class="ico" viewBox="0 0 24 24"><use href="#i-pulse"/></svg></span>
+        <span class="bridge-label" id="bridgeLabel">live</span>
+      </div>
+      <div class="bridge-line"></div>
+    </div>
+
+    <!-- ───────── DOCTOR ───────── -->
+    <article class="pod pod-doctor" id="doctorCard">
+      <div class="pod-sheen" aria-hidden="true"></div>
+
+      <header class="pod-head">
+        <span class="avatar avatar-doctor"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-stetho"/></svg></span>
+        <div class="pod-id">
+          <h2>Doctor</h2>
+          <p class="pod-sub">Reads <span class="tag tag-doctor">English</span></p>
+        </div>
+        <span class="pill" id="doctorState"><i></i><span>Waiting</span></span>
+      </header>
+
+      <!-- the complaint, translated -->
+      <div class="io-block">
+        <span class="io-label">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-speak"/></svg>
+          Patient said, in English
+        </span>
+        <div id="doctorRead" class="bubble bubble-doctor" lang="en" data-empty="Waiting for the patient">
+          <span class="empty">Once the patient speaks and you tap <b>Give to doctor</b>, the complaint arrives here in English.</span>
+        </div>
+        <div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div>
+        <button id="copyReadBtn" class="chip-btn" type="button" hidden>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-copy"/></svg> Copy
+        </button>
+      </div>
+
+      <!-- doctor's reply -->
+      <div class="io-block">
+        <label class="io-label" for="doctorInput">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>
+          Doctor's reply or prescription
+        </label>
+        <textarea id="doctorInput" class="say" rows="3" lang="en"
+          placeholder="Type in English, or dictate with the mic below"></textarea>
+        <span id="doctorInterim" class="interim" aria-live="polite"></span>
+        <div class="skeleton" aria-hidden="true"><span></span><span></span></div>
+      </div>
+
+      <div class="mic-row">
+        <button id="doctorMic" class="mic mic-doctor" type="button" aria-label="Dictate reply">
+          <span class="mic-ring" aria-hidden="true"></span>
+          <span class="mic-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-mic"/></svg></span>
+          <span class="mic-bars" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </span>
+          <span class="mic-label">Dictate</span>
+        </button>
+        <button id="doctorTranscribe" class="mic-alt mic-alt-doctor" type="button" hidden
+          title="Record, then send to the server for the words"
+          aria-label="Record audio and send it for transcription instead of live speech">
+          <span class="mic-alt-ico" aria-hidden="true">
+            <svg class="ico" viewBox="0 0 24 24"><use href="#i-mic-wave"/></svg>
+          </span>
+          <span class="mic-alt-label">Transcribe</span>
+        </button>
+      </div>
+
+      <div class="actions">
+        <button id="relayBtn" class="btn-primary btn-doctor" type="button">
+          <span class="btn-label">Speak to patient</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-arrow-l"/></svg>
+        </button>
+        <button id="toRxBtn" class="btn-secondary btn-doctor" type="button">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clipboard"/></svg>
+          <span class="btn-label">Make prescription</span>
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <!-- ════ TRANSCRIPT ════ -->
+  <details class="card log-card" id="logCard">
+    <summary class="log-summary">
+      <span class="log-avatar" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><use href="#i-list"/></svg></span>
+      <span class="log-text">
+        <span class="log-title">Full transcript</span>
+        <span class="log-meta" id="logCount">0 turns</span>
+      </span>
+      <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-back"/></svg>
+    </summary>
+    <div id="transcript" class="transcript"><p class="hint">Nothing yet.</p></div>
+  </details>
+</section>
+
+<!-- ══════════════════════════ PRESCRIPTION ══════════════════════════ -->
+<section id="screen-rx" class="screen screen-narrow" hidden>
+
+  <div class="stepbar">
+    <button class="btn-ghost" id="backToConsult" type="button">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-back"/></svg> Back
+    </button>
+    <span class="step-label">Prescription</span>
+    <div class="rail" role="presentation"><span class="rail-fill" id="railFill2"></span></div>
+  </div>
+
+  <article class="card pod-doctor-flat">
+    <header class="pod-head">
+      <span class="avatar avatar-doctor"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-stetho"/></svg></span>
+      <div class="pod-id">
+        <h2>1 · Doctor's note</h2>
+        <p class="pod-sub">Plain English <span class="tag tag-doctor">English</span></p>
+      </div>
+    </header>
+    <label class="io-label" for="rxInput">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>
+      Write the prescription
+    </label>
+    <textarea id="rxInput" class="say" rows="5" lang="en"
+      placeholder="e.g. Paracetamol 500 mg twice a day after food for 3 days. Plenty of ORS. Come back if the fever does not drop in 2 days."></textarea>
+    <div class="actions">
+      <button id="rxMake" class="btn-primary btn-doctor btn-shine" type="button">
+        <span class="btn-label">Build prescription</span>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pulse"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <article class="card rx-result" id="rxResult" hidden>
+    <header class="pod-head">
+      <span class="avatar avatar-patient"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-clipboard"/></svg></span>
+      <div class="pod-id">
+        <h2>2 · For the patient</h2>
+        <p class="pod-sub"><span class="tag tag-patient" id="rxLangTag">Hindi</span> &middot; in their own words</p>
+      </div>
+      <button id="rxSpeak" class="btn-secondary btn-sm" type="button">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-speak"/></svg>
+        <span class="btn-label">Read aloud</span>
+      </button>
+    </header>
+
+    <div class="skeleton skeleton-rx" aria-hidden="true"><span></span><span></span><span></span></div>
+
+    <div id="rxSummary" class="summary"></div>
+    <div id="rxMeds" class="meds"></div>
+    <div id="rxExtras" class="extras"></div>
+
+    <div class="actions">
+      <button id="rxSend" class="btn-primary btn-doctor btn-big" type="button" hidden>
+        <span class="btn-label">Send to patient</span>
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-send"/></svg>
+      </button>
+      <p class="hint center" id="rxSendHint" hidden>Sends this prescription into the patient's chat, in their language.</p>
+    </div>
+
+    <div class="actions actions-row">
+      <button id="rxPrint" class="btn-secondary" type="button">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-print"/></svg>
+        <span class="btn-label">Print / save as PDF</span>
+      </button>
+      <button id="rxShare" class="btn-secondary btn-sq" type="button" title="More actions" aria-label="More actions">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-dots"/></svg>
+      </button>
+    </div>
+
+    <p class="disclaimer">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alert"/></svg>
+      AI-translated. The doctor must check the English note before the patient follows it.
+    </p>
+  </article>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p>
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alert"/></svg>
+    <span>AI translation can be wrong. A doctor must read the English before the patient follows it.
+    In an emergency, call the nearest health worker or ambulance — do not wait for this page.</span>
+  </p>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
